@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Goal Tracker - Ziele & Schritte</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            background: none;
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #6c757d;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .tab.active {
+            color: #667eea;
+            background: white;
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .tab-content {
+            display: none;
+            padding: 30px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .goal-form {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 1px solid #e9ecef;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1em;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-small {
+            padding: 8px 15px;
+            font-size: 0.9em;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+
+        .goals-grid {
+            display: grid;
+            gap: 20px;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        }
+
+        .goal-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .goal-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .goal-card.completed {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            border-color: #28a745;
+        }
+
+        .goal-title {
+            font-size: 1.3em;
+            font-weight: 700;
+            color: #495057;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .goal-description {
+            color: #6c757d;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+
+        .priority {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+        }
+
+        .priority.high {
+            background: #fee;
+            color: #dc3545;
+        }
+
+        .priority.medium {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .priority.low {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .steps-container {
+            margin-top: 20px;
+        }
+
+        .steps-header {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #495057;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .step-item:hover {
+            background: #e9ecef;
+        }
+
+        .step-checkbox {
+            margin-right: 10px;
+            transform: scale(1.2);
+            accent-color: #667eea;
+        }
+
+        .step-text {
+            flex: 1;
+            color: #495057;
+        }
+
+        .step-text.completed {
+            text-decoration: line-through;
+            opacity: 0.6;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 15px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            transition: width 0.3s ease;
+            border-radius: 10px;
+        }
+
+        .progress-text {
+            text-align: center;
+            margin-top: 5px;
+            font-size: 0.9em;
+            color: #6c757d;
+            font-weight: 600;
+        }
+
+        .add-step-form {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+        }
+
+        .add-step-form.active {
+            display: block;
+        }
+
+        .goal-actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+        .empty-state img {
+            width: 100px;
+            height: 100px;
+            opacity: 0.5;
+            margin-bottom: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+        }
+
+        .stat-number {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .stat-label {
+            color: #6c757d;
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .tabs {
+                flex-direction: column;
+            }
+
+            .goals-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+
+            .header h1 {
+                font-size: 2em;
+            }
+
+            .goal-actions {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Goal Tracker</h1>
+            <p>Verwalte deine täglichen, wöchentlichen und monatlichen Ziele</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('daily')">📅 Täglich</button>
+            <button class="tab" onclick="switchTab('weekly')">📊 Wöchentlich</button>
+            <button class="tab" onclick="switchTab('monthly')">🗓️ Monatlich</button>
+            <button class="tab" onclick="switchTab('stats')">📈 Statistiken</button>
+        </div>
+
+        <!-- Daily Goals Tab -->
+        <div id="daily" class="tab-content active">
+            <div class="goal-form">
+                <h3>Neues tägliches Ziel hinzufügen</h3>
+                <form id="daily-form" onsubmit="addGoal(event, 'daily')">
+                    <div class="form-group">
+                        <label for="daily-title">Ziel Titel</label>
+                        <input type="text" id="daily-title" required placeholder="z.B. 30 Minuten Sport">
+                    </div>
+                    <div class="form-group">
+                        <label for="daily-description">Beschreibung</label>
+                        <textarea id="daily-description" placeholder="Warum ist dieses Ziel wichtig für dich?"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="daily-priority">Priorität</label>
+                        <select id="daily-priority">
+                            <option value="low">Niedrig</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">Hoch</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn">Ziel hinzufügen</button>
+                </form>
+            </div>
+            <div class="goals-grid" id="daily-goals"></div>
+        </div>
+
+        <!-- Weekly Goals Tab -->
+        <div id="weekly" class="tab-content">
+            <div class="goal-form">
+                <h3>Neues wöchentliches Ziel hinzufügen</h3>
+                <form id="weekly-form" onsubmit="addGoal(event, 'weekly')">
+                    <div class="form-group">
+                        <label for="weekly-title">Ziel Titel</label>
+                        <input type="text" id="weekly-title" required placeholder="z.B. 3 Bücher lesen">
+                    </div>
+                    <div class="form-group">
+                        <label for="weekly-description">Beschreibung</label>
+                        <textarea id="weekly-description" placeholder="Beschreibe dein wöchentliches Ziel..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="weekly-priority">Priorität</label>
+                        <select id="weekly-priority">
+                            <option value="low">Niedrig</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">Hoch</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn">Ziel hinzufügen</button>
+                </form>
+            </div>
+            <div class="goals-grid" id="weekly-goals"></div>
+        </div>
+
+        <!-- Monthly Goals Tab -->
+        <div id="monthly" class="tab-content">
+            <div class="goal-form">
+                <h3>Neues monatliches Ziel hinzufügen</h3>
+                <form id="monthly-form" onsubmit="addGoal(event, 'monthly')">
+                    <div class="form-group">
+                        <label for="monthly-title">Ziel Titel</label>
+                        <input type="text" id="monthly-title" required placeholder="z.B. Neue Programmiersprache lernen">
+                    </div>
+                    <div class="form-group">
+                        <label for="monthly-description">Beschreibung</label>
+                        <textarea id="monthly-description" placeholder="Beschreibe dein monatliches Ziel..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="monthly-priority">Priorität</label>
+                        <select id="monthly-priority">
+                            <option value="low">Niedrig</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">Hoch</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn">Ziel hinzufügen</button>
+                </form>
+            </div>
+            <div class="goals-grid" id="monthly-goals"></div>
+        </div>
+
+        <!-- Stats Tab -->
+        <div id="stats" class="tab-content">
+            <div class="stats-grid" id="stats-grid">
+                <!-- Stats will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let goals = JSON.parse(localStorage.getItem('goals')) || {
+            daily: [],
+            weekly: [],
+            monthly: []
+        };
+
+        let currentGoalId = parseInt(localStorage.getItem('currentGoalId')) || 1;
+
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to selected tab
+            event.target.classList.add('active');
+
+            // Update stats if stats tab is selected
+            if (tabName === 'stats') {
+                updateStats();
+            }
+        }
+
+        function addGoal(event, type) {
+            event.preventDefault();
+            
+            const title = document.getElementById(`${type}-title`).value;
+            const description = document.getElementById(`${type}-description`).value;
+            const priority = document.getElementById(`${type}-priority`).value;
+            
+            const goal = {
+                id: currentGoalId++,
+                title: title,
+                description: description,
+                priority: priority,
+                completed: false,
+                steps: [],
+                createdAt: new Date().toISOString(),
+                type: type
+            };
+            
+            goals[type].push(goal);
+            saveGoals();
+            renderGoals(type);
+            
+            // Reset form
+            document.getElementById(`${type}-form`).reset();
+        }
+
+        function addStep(goalId, type) {
+            const stepInput = document.getElementById(`step-input-${goalId}`);
+            const stepText = stepInput.value.trim();
+            
+            if (stepText === '') return;
+            
+            const goal = goals[type].find(g => g.id === goalId);
+            if (goal) {
+                goal.steps.push({
+                    id: Date.now(),
+                    text: stepText,
+                    completed: false
+                });
+                saveGoals();
+                renderGoals(type);
+            }
+        }
+
+        function toggleStep(goalId, stepId, type) {
+            const goal = goals[type].find(g => g.id === goalId);
+            if (goal) {
+                const step = goal.steps.find(s => s.id === stepId);
+                if (step) {
+                    step.completed = !step.completed;
+                    saveGoals();
+                    renderGoals(type);
+                }
+            }
+        }
+
+        function deleteStep(goalId, stepId, type) {
+            const goal = goals[type].find(g => g.id === goalId);
+            if (goal) {
+                goal.steps = goal.steps.filter(s => s.id !== stepId);
+                saveGoals();
+                renderGoals(type);
+            }
+        }
+
+        function toggleGoal(goalId, type) {
+            const goal = goals[type].find(g => g.id === goalId);
+            if (goal) {
+                goal.completed = !goal.completed;
+                // If marking as completed, mark all steps as completed
+                if (goal.completed) {
+                    goal.steps.forEach(step => step.completed = true);
+                }
+                saveGoals();
+                renderGoals(type);
+            }
+        }
+
+        function deleteGoal(goalId, type) {
+            if (confirm('Bist du sicher, dass du dieses Ziel löschen möchtest?')) {
+                goals[type] = goals[type].filter(g => g.id !== goalId);
+                saveGoals();
+                renderGoals(type);
+            }
+        }
+
+        function toggleAddStepForm(goalId) {
+            const form = document.getElementById(`add-step-form-${goalId}`);
+            form.classList.toggle('active');
+            if (form.classList.contains('active')) {
+                document.getElementById(`step-input-${goalId}`).focus();
+            }
+        }
+
+        function calculateProgress(goal) {
+            if (goal.steps.length === 0) return 0;
+            const completedSteps = goal.steps.filter(step => step.completed).length;
+            return Math.round((completedSteps / goal.steps.length) * 100);
+        }
+
+        function renderGoals(type) {
+            const container = document.getElementById(`${type}-goals`);
+            const typeGoals = goals[type];
+            
+            if (typeGoals.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div style="font-size: 4em; margin-bottom: 20px;">🎯</div>
+                        <h3>Noch keine ${type === 'daily' ? 'täglichen' : type === 'weekly' ? 'wöchentlichen' : 'monatlichen'} Ziele</h3>
+                        <p>Füge dein erstes Ziel hinzu, um zu beginnen!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = typeGoals.map(goal => {
+                const progress = calculateProgress(goal);
+                const completedSteps = goal.steps.filter(s => s.completed).length;
+                
+                return `
+                    <div class="goal-card ${goal.completed ? 'completed' : ''}">
+                        <div class="goal-title">
+                            <span>${goal.title}</span>
+                            <input type="checkbox" ${goal.completed ? 'checked' : ''} 
+                                   onchange="toggleGoal(${goal.id}, '${type}')" class="step-checkbox">
+                        </div>
+                        
+                        <div class="priority ${goal.priority}">${goal.priority.toUpperCase()}</div>
+                        
+                        <div class="goal-description">${goal.description || 'Keine Beschreibung'}</div>
+                        
+                        <div class="steps-container">
+                            <div class="steps-header">
+                                Schritte (${completedSteps}/${goal.steps.length})
+                            </div>
+                            
+                            ${goal.steps.map(step => `
+                                <div class="step-item">
+                                    <input type="checkbox" class="step-checkbox" 
+                                           ${step.completed ? 'checked' : ''}
+                                           onchange="toggleStep(${goal.id}, ${step.id}, '${type}')">
+                                    <span class="step-text ${step.completed ? 'completed' : ''}">${step.text}</span>
+                                    <button class="btn btn-danger btn-small" onclick="deleteStep(${goal.id}, ${step.id}, '${type}')">
+                                        🗑️
+                                    </button>
+                                </div>
+                            `).join('')}
+                            
+                            <div class="add-step-form" id="add-step-form-${goal.id}">
+                                <div style="display: flex; gap: 10px;">
+                                    <input type="text" id="step-input-${goal.id}" 
+                                           placeholder="Neuen Schritt hinzufügen..." 
+                                           onkeypress="if(event.key==='Enter') addStep(${goal.id}, '${type}')"
+                                           style="flex: 1;">
+                                    <button class="btn btn-small" onclick="addStep(${goal.id}, '${type}')">Hinzufügen</button>
+                                </div>
+                            </div>
+                            
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${progress}%"></div>
+                            </div>
+                            <div class="progress-text">${progress}% abgeschlossen</div>
+                        </div>
+                        
+                        <div class="goal-actions">
+                            <button class="btn btn-small" onclick="toggleAddStepForm(${goal.id})">
+                                + Schritt hinzufügen
+                            </button>
+                            <button class="btn btn-success btn-small" onclick="toggleGoal(${goal.id}, '${type}')">
+                                ${goal.completed ? 'Als unvollständig markieren' : 'Als abgeschlossen markieren'}
+                            </button>
+                            <button class="btn btn-danger btn-small" onclick="deleteGoal(${goal.id}, '${type}')">
+                                Löschen
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function updateStats() {
+            const statsContainer = document.getElementById('stats-grid');
+            
+            const totalGoals = goals.daily.length + goals.weekly.length + goals.monthly.length;
+            const completedGoals = goals.daily.filter(g => g.completed).length + 
+                                 goals.weekly.filter(g => g.completed).length + 
+                                 goals.monthly.filter(g => g.completed).length;
+            
+            const totalSteps = Object.values(goals).flat().reduce((acc, goal) => acc + goal.steps.length, 0);
+            const completedSteps = Object.values(goals).flat().reduce((acc, goal) => 
+                acc + goal.steps.filter(step => step.completed).length, 0);
+            
+            const completionRate = totalGoals > 0 ? Math.round((completedGoals / totalGoals) * 100) : 0;
+            const stepCompletionRate = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
+            
+            statsContainer.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${totalGoals}</div>
+                    <div class="stat-label">Gesamte Ziele</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${completedGoals}</div>
+                    <div class="stat-label">Abgeschlossene Ziele</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${completionRate}%</div>
+                    <div class="stat-label">Erfolgsrate</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${totalSteps}</div>
+                    <div class="stat-label">Gesamte Schritte</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${completedSteps}</div>
+                    <div class="stat-label">Abgeschlossene Schritte</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${stepCompletionRate}%</div>
+                    <div class="stat-label">Schritt-Erfolgsrate</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${goals.daily.length}</div>
+                    <div class="stat-label">Tägliche Ziele</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${goals.weekly.length}</div>
+                    <div class="stat-label">Wöchentliche Ziele</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${goals.monthly.length}</div>
+                    <div class="stat-label">Monatliche Ziele</div>
+                </div>
+            `;
+        }
+
+        function saveGoals() {
+            localStorage.setItem('goals', JSON.stringify(goals));
+            localStorage.setItem('currentGoalId', currentGoalId.toString());
+        }
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            renderGoals('daily');
+            renderGoals('weekly');
+            renderGoals('monthly');
+            updateStats();
+        });
+    </script>
+</body>
+</html>
