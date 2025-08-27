@@ -380,7 +380,31 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- Login Screen -->
+    <div id="login-screen" class="container" style="display: flex; align-items: center; justify-content: center; min-height: 100vh;">
+        <div style="background: white; padding: 40px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1); text-align: center; max-width: 400px; width: 100%;">
+            <div style="font-size: 4em; margin-bottom: 20px;">🔐</div>
+            <h2 style="color: #495057; margin-bottom: 10px;">Goal Tracker</h2>
+            <p style="color: #6c757d; margin-bottom: 30px;">Bitte gib dein Passwort ein</p>
+            
+            <div class="form-group">
+                <input type="password" id="password-input" placeholder="Passwort eingeben..." 
+                       style="width: 100%; padding: 15px; border: 2px solid #e9ecef; border-radius: 10px; font-size: 1.1em; text-align: center;"
+                       onkeypress="if(event.key==='Enter') checkPassword()">
+            </div>
+            
+            <button onclick="checkPassword()" class="btn" style="width: 100%; margin: 0;">
+                🚀 Anmelden
+            </button>
+            
+            <div id="login-error" style="display: none; color: #dc3545; margin-top: 15px; font-weight: 600;">
+                ❌ Falsches Passwort! Versuche es erneut.
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App (hidden initially) -->
+    <div id="main-app" class="container" style="display: none;">
         <div class="header">
             <h1>🎯 Goal Tracker</h1>
             <p>Verwalte deine täglichen, wöchentlichen und monatlichen Ziele</p>
@@ -483,6 +507,56 @@
     </div>
 
     <script>
+        // Password protection
+        const CORRECT_PASSWORD = "2809";
+        let isAuthenticated = sessionStorage.getItem('authenticated') === 'true';
+
+        function checkPassword() {
+            const passwordInput = document.getElementById('password-input');
+            const enteredPassword = passwordInput.value;
+            const errorDiv = document.getElementById('login-error');
+            
+            if (enteredPassword === CORRECT_PASSWORD) {
+                sessionStorage.setItem('authenticated', 'true');
+                isAuthenticated = true;
+                showMainApp();
+            } else {
+                errorDiv.style.display = 'block';
+                passwordInput.value = '';
+                passwordInput.focus();
+                
+                // Shake animation for error feedback
+                passwordInput.style.animation = 'shake 0.5s';
+                setTimeout(() => {
+                    passwordInput.style.animation = '';
+                }, 500);
+            }
+        }
+
+        function showMainApp() {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('main-app').style.display = 'block';
+            
+            // Initialize the app after login
+            renderGoals('daily');
+            renderGoals('weekly');
+            renderGoals('monthly');
+            updateStats();
+        }
+
+        function showLoginScreen() {
+            document.getElementById('login-screen').style.display = 'flex';
+            document.getElementById('main-app').style.display = 'none';
+            document.getElementById('password-input').focus();
+        }
+
+        // Check authentication on page load
+        if (isAuthenticated) {
+            showMainApp();
+        } else {
+            showLoginScreen();
+        }
+
         let goals = JSON.parse(localStorage.getItem('goals')) || {
             daily: [],
             weekly: [],
@@ -756,11 +830,28 @@
 
         // Initialize the app
         document.addEventListener('DOMContentLoaded', function() {
-            renderGoals('daily');
-            renderGoals('weekly');
-            renderGoals('monthly');
-            updateStats();
+            // Only initialize if authenticated, otherwise it's handled by showMainApp()
+            if (isAuthenticated) {
+                renderGoals('daily');
+                renderGoals('weekly');
+                renderGoals('monthly');
+                updateStats();
+            }
         });
     </script>
+    
+    <style>
+        @keyframes shake {
+            0%, 20%, 40%, 60%, 80% {
+                transform: translateX(-5px);
+            }
+            10%, 30%, 50%, 70%, 90% {
+                transform: translateX(5px);
+            }
+            100% {
+                transform: translateX(0);
+            }
+        }
+    </style>
 </body>
 </html>
